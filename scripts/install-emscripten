@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+# shellcheck source=/dev/null
+
+# Install emscripten && glslang with webGL support
+# glslang provides glslangValidator tool 
+
+set -o nounset -o pipefail -o errexit
+
+DEVEL="${DEVEL:-$HOME/src}"
+
+# glslangValidator
+GLSLANG_APT_PKGS=(cmake bison)
+GLSLANG_REPO=https://github.com/KhronosGroup/glslang.git
+GLSLANG_SRC="${DEVEL?}/glslang"
+
+# Emscripten
+EMSDK_REPO=https://github.com/emscripten-core/emsdk.git
+EMSDK_SRC="${DEVEL?}/emsdk"
+
+CMAKE="emcmake cmake"
+MAKE="emmake make -j4"
+
+# Configuration for glslang w/ webGL subset of OpenGL
+declare -a GLSLANG_CONFIG=(
+    "-DCMAKE_BUILD_TYPE=Release"
+    # WebGL config
+    "-DENABLE_HLSL=OFF"
+    "-DBUILD_TESTING=OFF"
+    "-DENABLE_OPT=OFF"
+    "-DINSTALL_GTEST=OFF"
+    "-DENABLE_GLSLANG_JS=ON"
+    "-DENABLE_GLSLANG_WEB_DEVEL=ON"
+)
+
+# Install and activate emscripten SDK to EMSDK_SRC
+emscripten_install() {
+    git clone "${EMSDK_REPO}" "${EMSDK_SRC}"
+    cd "${EMSDK_SRC}"
+
+    # installs everything in subdirectory:
+    # llvm, python, node, emscripten versions that work together
+    ./emsdk install latest --shallow
+    ./emsdk activate latest
+    source ./emsdk_env.sh
+}
+
+# Install glslang w/ webGL support
+glslang_install() {
+    local build_dir="${GLSLANG_SRC}/_build"           # cmake build dir
+    git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
+    cd "${GLSLANG_SRC}"
+    # Skipping extra installs for tests + other features
+
+    # Update grammar to use webGL subset of OpenGL
+    cd glslang && ./updateGrammar web
+    cd "${GLSLANG_SRC}"
+    mkdir -p "${build_dir}" && cd "${build_dir}"
+
+    # emcmake is in emsdk - should be available on PATH after sourcing
+    # emsdk_env.sh (in current shell)
+    if ! hash emcmake 2>/dev/null; then
+        echo "emcmake not found; PATH configuration failed" && exit 1
+    fi
+    ${CMAKE} -DCMAKE_INSTALL_PREFIX="${build_dir}/install" "${GLSLANG_CONFIG[@]}"
+    ${MAKE} install
+}
+
+apt_install() {
+    # prereqs
+    sudo apt-get update -qq || true
+    sudo apt-get install -y --no-install-recommends \
+         "${GLSLANG_APT_PKGS[@]}" >/dev/null >&2
+}
+
+do_install() {
+    [[ -z "$CI" ]] && apt_install
+    mkdir -p "${DEVEL}"
+    emscripten_install
+    glslang_install
+}
+
+do_uninstall() {
+    rm -rf "${GLSLANG_SRC}" "${EMSDK_SRC}"
+    rm -rf "${HOME}"/.emscripten*
+}
+
+usage() {
+    cat <<EOF_HELP
+Usage: $0 [-h] command
+        install	     Install emscripten & glslang
+        uninstall    Uninstall emscripten & glslang
+        -h           Show this message
+EOF_HELP
+}
+
+main () {
+    case "${1:--h}" in
+        (*install*) do_install ;;
+        (*uninstall*) do_uninstall;;
+        -h|--help) usage && exit 0;;
+        (*) usage && exit 1;;
+    esac
+}
+
+main "$@"

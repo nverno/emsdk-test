@@ -1,0 +1,14 @@
+language: c
+compiler:
+- clang
+- gcc
+
+os: linux
+env:
+  - DEVEL="$HOME"/src
+
+before_script:
+  - sudo apt-get install -y --no-install-recommends cmake bison
+
+install:
+  - ./scripts/install-emscripten install
