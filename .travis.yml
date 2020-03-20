@@ -5,7 +5,7 @@ compiler:
 
 os: linux
 env:
-  - DEVEL="$HOME"/src
+  - DEVEL="$HOME/src"
 
 before_script:
   - sudo apt-get install -y --no-install-recommends cmake bison

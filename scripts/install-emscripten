@@ -4,7 +4,7 @@
 # Install emscripten && glslang with webGL support
 # glslang provides glslangValidator tool 
 
-set -o nounset -o pipefail -o errexit
+set -eo pipefail
 
 DEVEL="${DEVEL:-$HOME/src}"
 
@@ -34,6 +34,7 @@ declare -a GLSLANG_CONFIG=(
 
 # Install and activate emscripten SDK to EMSDK_SRC
 emscripten_install() {
+    [[ -d "${EMSDK_SRC}" ]] && return 0
     git clone "${EMSDK_REPO}" "${EMSDK_SRC}"
     cd "${EMSDK_SRC}"
 
@@ -47,6 +48,8 @@ emscripten_install() {
 # Install glslang w/ webGL support
 glslang_install() {
     local build_dir="${GLSLANG_SRC}/_build"           # cmake build dir
+    [[ -d "${GLSLANG_SRC}" ]] && return 0
+
     git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
     cd "${GLSLANG_SRC}"
     # Skipping extra installs for tests + other features
@@ -61,7 +64,8 @@ glslang_install() {
     if ! hash emcmake 2>/dev/null; then
         echo "emcmake not found; PATH configuration failed" && exit 1
     fi
-    ${CMAKE} -DCMAKE_INSTALL_PREFIX="${build_dir}/install" "${GLSLANG_CONFIG[@]}"
+    ${CMAKE} -DCMAKE_INSTALL_PREFIX="${build_dir}/install" "${GLSLANG_CONFIG[@]}" \
+             "${GLSLANG_SRC}"
     ${MAKE} install
 }
 
@@ -95,7 +99,7 @@ EOF_HELP
 
 main () {
     case "${1:--h}" in
-        (*install*) do_install ;;
+        (install*) do_install ;;
         (*uninstall*) do_uninstall;;
         -h|--help) usage && exit 0;;
         (*) usage && exit 1;;
