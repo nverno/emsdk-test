@@ -4,18 +4,18 @@ compiler:
   - gcc
 
 os: linux
-dist: trusty
+dist: bionic
 env:
-  - DEVEL="$HOME/src" PATH="$DEVEL/emsdk/bin:$PATH"
+  - DEVEL="$HOME/src" # PATH="$DEVEL/emsdk/bin:$PATH"
 
 cache:
   apt: true
 
 addons:
   apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-trusty-6.0
+    # sources:
+    #   - ubuntu-toolchain-r-test
+    #   - llvm-toolchain-trusty-6.0
     packages:
       - clang-3.6
 
