@@ -29,7 +29,7 @@ emsdk_install() {
     # Installs everything in subdirectory, including .emscripten config
     (
         cd "${EMSDK_SRC}"
-        ./emsdk install "$tag" --shallow --embedded
+        ./emsdk install "$tag" --shallow
     )
 }
 
