@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# shellcheck source=/dev/null
+
+# Install emscripten
+
+set -eo pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)" 
+DESTDIR="${DESTDIR:-$DIR/../temp}"
+
+EMSDK_REPO=https://github.com/emscripten-core/emsdk.git
+EMSDK_SRC="${EMSDK_DIR:-$DESTDIR/emsdk}"
+
+# Install or update emscripten SDK source
+emsdk_source() {
+    if [[ ! -d "${EMSDK_SRC}" ]]; then
+        git clone "${EMSDK_REPO}" "${EMSDK_SRC}"
+    else
+        (cd "${EMSDK_SRC}" && git pull)
+    fi
+}
+
+# Install emsdk version
+# @param tag optional version tag (default latest)
+emsdk_install() {
+    local tag="${1:-latest}"
+    [[ ! -d "${EMSDK_SRC}" ]] && emsdk_source
+
+    # Installs everything in subdirectory, including .emscripten config
+    (
+        cd "${EMSDK_SRC}"
+        ./emsdk install "$tag" --shallow --embedded
+    )
+}
+
+# Activate emsdk environment in current shell
+# Downloads and installs emsdk if not present
+# @param tag optional version tag to activate
+emsdk_activate() {
+    local tag="${1:-latest}"
+    [[ ! -d "${EMSDK_SRC}" ]] && emsdk_install "$tag"
+    pushd "${EMSDK_SRC}"
+    ./emsdk activate "$tag" --embedded
+    popd
+}
+
+##
+# @info         Print usage info
+##
+usage() {
+    cat <<EOF_HELP
+Usage: $0 [-h] command [options]
+       source             Install emsdk source
+       install [version]  Install emsdk VERSION (default latest)
+       activate [version] Activate emsdk VERSION (default latest) in current shell
+        -h                Show this message
+EOF_HELP
+}
+
+main() {
+    case "$1" in
+        (source) emsdk_source;;
+        install) shift && emsdk_install "$@";;
+        activate) shift && emsdk_activate "$@";;
+        (-h|--help) usage && exit 0;;
+        *) usage && exit 1;;
+    esac
+}
+
+main "$@"

@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+# shellcheck source=/dev/null
+
+# Install glslang
+# Notes:
+# - the installation instructions on the website are not up-to-date
+# - needs at least cmake v3+ for add_link_options
+# - the web install variables aren't up-to-date
+
+set -eo pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)" 
+DESTDIR="${DESTDIR:-$DIR/../temp}"
+
+# glslangValidator
+# GLSLANG_APT_PKGS=(cmake bison)
+GLSLANG_REPO=https://github.com/KhronosGroup/glslang.git
+GLSLANG_SRC="${GLSLANG_DIR:-$DESTDIR/glslang}"
+
+EMSDK_DIR="${EMSDK_DIR:-$DESTDIR/emsdk}"
+
+# Configuration for glslang cmake
+declare -a GLSLANG_CONFIG=(
+    "-DCMAKE_BUILD_TYPE=Release"
+    "-DENABLE_HLSL=OFF"
+    "-DBUILD_TESTING=OFF"
+    "-DENABLE_OPT=OFF"
+    "-DENABLE_GLSLANG_JS=ON"
+)
+
+# FIXME: web subset doesn't build
+declare -a GLSLANG_CONFIG_WEB=(
+    # Should cut the grammar down to subset for web
+    "-DENABLE_GLSLANG_WEBMIN=ON"
+    "-DENABLE_GLSLANG_WEBMIN_DEVEL=ON"
+)
+
+# Build glslang
+# @param web optionally pass 'web' to build web-only subset of grammar
+glslang_install() {
+    local build_dir="${GLSLANG_SRC}/_build"
+    local cmake_cmd="cmake"
+    local make_cmd="make"
+    local cmake_config=( "${GLSLANG_CONFIG[@]}" )
+    [[ ! -d "${GLSLANG_SRC}" ]] && git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
+
+    # only rebuild if web is passed as argument
+    # XXX: should be separate arguments if web ever builds successfully
+    if [[ -d "${build_dir}" && "$1" == "web" ]]; then
+        rm -rf "${build_dir}"
+    else
+        echo "glslang already built" && return 0
+    fi
+
+    # build glslang
+    cd "${GLSLANG_SRC}"
+
+    # Setup for web subset build
+    if [[ "$1" == "web" ]]; then
+        # activate emsdk
+        . "${EMSDK_DIR}/emsdk_env.sh"
+        if ! hash emcmake 2>/dev/null; then
+            echo "emcmake not found; PATH configuration failed" && exit 1
+        fi
+
+        # update grammar to web subset
+        (cd glslang && ./updateGrammar web)
+
+        cmake_cmd="emcmake cmake"
+        make_cmd="emmake make"
+        cmake_config=( "${GLSLANG_CONFIG[@]}" "${GLSLANG_CONFIG_WEB[@]}" )
+    fi
+
+    mkdir -p "${build_dir}" && cd "${build_dir}"
+    # Configure
+    "${cmake_cmd}"                                    \
+        -DCMAKE_INSTALL_PREFIX="${build_dir}/install" \
+        "${cmake_config[@]}"                          \
+        "${GLSLANG_SRC}"
+    
+    "${make_cmd}" -j$(( $(nproc) - 1 ))
+}
+
+##
+# @info         Print usage info
+##
+usage() {
+    cat <<EOF_HELP
+Usage: $0 [-h|--help] 
+       web          Install web-only subset of glsl
+        -h          Show this message
+EOF_HELP
+}
+
+main() {
+    [[ ! -d "${EMSDK_DIR}" ]] && { echo "install emsdk first" && exit 1; }
+    case "$1" in
+        (web) glslang_install web ;;
+        -h|--help) usage && exit 0;;
+        *) glslang_install ;;
+    esac
+}
+
+main "$@"
