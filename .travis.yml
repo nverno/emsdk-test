@@ -13,11 +13,12 @@ cache:
 
 addons:
   apt:
-    # sources:
-    #   - ubuntu-toolchain-r-test
-    #   - llvm-toolchain-trusty-6.0
+    sources:
+      - ubuntu-toolchain-r-test
+      # - llvm-toolchain-trusty-6.0
     packages:
       - clang-3.6
+      - cmake
 
 install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
