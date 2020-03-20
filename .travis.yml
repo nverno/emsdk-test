@@ -22,4 +22,6 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
       export CC=clang-3.6 CXX=clang++-3.6;
     fi
+
+script:
   - ./scripts/install-emscripten install
