@@ -18,29 +18,31 @@ EMSDK_REPO=https://github.com/emscripten-core/emsdk.git
 EMSDK_SRC="${DEVEL?}/emsdk"
 
 CMAKE="emcmake cmake"
+# FIXME: Why isn't GLSLANG_WEB being defined during cmake configuration?
 MAKE="emmake make -j4"
 
 # Configuration for glslang w/ webGL subset of OpenGL
 declare -a GLSLANG_CONFIG=(
     "-DCMAKE_BUILD_TYPE=Release"
     # WebGL config
+    "-DENABLE_GLSLANG_WEB=ON"
     "-DENABLE_HLSL=OFF"
     "-DBUILD_TESTING=OFF"
     "-DENABLE_OPT=OFF"
-    "-DINSTALL_GTEST=OFF"
     "-DENABLE_GLSLANG_JS=ON"
-    "-DENABLE_GLSLANG_WEB_DEVEL=ON"
+    "-DENABLE_GLSLANG_WEBMIN=ON"
+    "-DENABLE_GLSLANG_WEBMIN_DEVEL=ON"
 )
 
 # Install and activate emscripten SDK to EMSDK_SRC
 emscripten_install() {
-    [[ -d "${EMSDK_SRC}" ]] && return 0
-    git clone "${EMSDK_REPO}" "${EMSDK_SRC}"
+    [[ ! -d "${EMSDK_SRC}" ]] &&
+        git clone "${EMSDK_REPO}" "${EMSDK_SRC}"
     cd "${EMSDK_SRC}"
 
     # installs everything in subdirectory:
     # llvm, python, node, emscripten versions that work together
-    ./emsdk install latest --shallow
+    ./emsdk install sdk-tag-1.39.10-64bit --shallow
     ./emsdk activate latest
     source ./emsdk_env.sh
 }
@@ -48,14 +50,13 @@ emscripten_install() {
 # Install glslang w/ webGL support
 glslang_install() {
     local build_dir="${GLSLANG_SRC}/_build"           # cmake build dir
-    [[ -d "${GLSLANG_SRC}" ]] && return 0
-
-    git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
+    [[ ! -d "${GLSLANG_SRC}" ]] &&
+        git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
     cd "${GLSLANG_SRC}"
     # Skipping extra installs for tests + other features
 
     # Update grammar to use webGL subset of OpenGL
-    cd glslang && ./updateGrammar web
+    cd glslang && ./updateGrammar "web"
     cd "${GLSLANG_SRC}"
     mkdir -p "${build_dir}" && cd "${build_dir}"
 
@@ -66,14 +67,16 @@ glslang_install() {
     fi
     ${CMAKE} -DCMAKE_INSTALL_PREFIX="${build_dir}/install" "${GLSLANG_CONFIG[@]}" \
              "${GLSLANG_SRC}"
-    ${MAKE} install
+    GLSLANG_WEB=1 ${MAKE} install
 }
 
 apt_install() {
     # prereqs
-    sudo apt-get update -qq || true
-    sudo apt-get install -y --no-install-recommends \
-         "${GLSLANG_APT_PKGS[@]}" >/dev/null >&2
+    if ! hash bison 2>/dev/null; then
+        sudo apt-get update -qq || true
+        sudo apt-get install -y --no-install-recommends \
+             "${GLSLANG_APT_PKGS[@]}" >/dev/null >&2
+    fi
 }
 
 do_install() {

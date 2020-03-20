@@ -1,14 +1,23 @@
-language: c
+language: cpp
 compiler:
-- clang
-- gcc
+  - clang
+  - gcc
 
 os: linux
+dist: trusty
 env:
   - DEVEL="$HOME/src"
 
-before_script:
-  - sudo apt-get install -y --no-install-recommends cmake bison
+cache:
+  apt: true
+
+addons:
+  apt:
+    packages:
+      - clang-3.6
 
 install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
+      export CC=clang-3.6 CXX=clang++-3.6;
+    fi
   - ./scripts/install-emscripten install
