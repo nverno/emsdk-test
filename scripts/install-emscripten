@@ -67,7 +67,7 @@ glslang_install() {
     fi
     ${CMAKE} -DCMAKE_INSTALL_PREFIX="${build_dir}/install" "${GLSLANG_CONFIG[@]}" \
              "${GLSLANG_SRC}"
-    GLSLANG_WEB=1 ${MAKE} install
+    ${MAKE} install
 }
 
 apt_install() {
