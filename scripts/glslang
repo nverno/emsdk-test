@@ -45,11 +45,12 @@ glslang_install() {
     [[ ! -d "${GLSLANG_SRC}" ]] && git clone "${GLSLANG_REPO}" "${GLSLANG_SRC}"
 
     # only rebuild if web is passed as argument
-    # XXX: should be separate arguments if web ever builds successfully
-    if [[ -d "${build_dir}" && "$1" == "web" ]]; then
-        rm -rf "${build_dir}"
-    else
-        echo "glslang already built" && return 0
+    if [[ -d "${build_dir}" ]]; then
+        if [[ "$1" == "web" ]]; then
+            rm -rf "${build_dir}"
+        else
+            echo "glslang already built" && return 0
+        fi
     fi
 
     # build glslang
