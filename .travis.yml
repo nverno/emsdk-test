@@ -6,8 +6,7 @@ compiler:
 os: linux
 dist: trusty
 env:
-  - DEVEL="$HOME/src"
-  - PATH="$DEVEL/emsdk/bin:$PATH"
+  - DEVEL="$HOME/src" PATH="$DEVEL/emsdk/bin:$PATH"
 
 cache:
   apt: true
