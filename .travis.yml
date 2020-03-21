@@ -24,7 +24,7 @@ install:
     # needs cmake version 3.13.5+ for add_link_options
   - |
     ver=cmake-3.17.0-Linux-x86_64
-    curl -L https://github.com/Kitware/CMake/releases/download/v3.17.0/${ver}.tar.gz
+    curl -LO https://github.com/Kitware/CMake/releases/download/v3.17.0/${ver}.tar.gz
     tar xzf "${ver}.tar.gz"
     export PATH="$(pwd)/${ver}:$PATH"
   - cmake --version
