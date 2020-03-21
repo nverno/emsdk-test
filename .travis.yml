@@ -17,14 +17,16 @@ addons:
       - ubuntu-toolchain-r-test
       # - llvm-toolchain-trusty-6.0
       - llvm-toolchain-precise-3.7
-      - kalakris-cmake
     packages:
       - clang-3.6
-      - cmake-data
-      - cmake
 
 install:
   # needs cmake version 3.13.5+ for add_link_options
+  -|
+  ver=cmake-3.17.0-Linux-x86_64.tar.gz
+  curl -L https://github.com/Kitware/CMake/releases/download/v3.17.0/${ver}
+  tar xzf "${ver}"
+  export PATH="$(pwd)/${ver}:$PATH"
   - cmake --version
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
       export CC=clang-3.6 CXX=clang++-3.6;
