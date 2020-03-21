@@ -9,18 +9,15 @@ GLSLANG_DIR =  ${DESTDIR}/glslang
 
 EMSDK_VERSION ?= latest
 
-CMAKE_VERSION  = 3.17.0
-CMAKE_RELEASES = https://github.com/Kitware/CMake/releases/download
-CMAKE_TARBALL  = cmake-${CMAKE_VERSION}-Linux-x86_64.tar.gz
-CMAKE_URI      = ${CMAKE_RELEASES}/v${CMAKE_VERSION}/${CMAKE_TARBALL}
+CMAKE_URL = https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz
 
 .PHONY: clean help setup deps
 all: emsdk-activate glslang ## Install both emscripten SDK & glslang
 	@
 
 deps: ## Install dependencies -- cmake v3.13.5+ for add_link_options
-	wget -qO- ${CMAKE_URI} | tar xzf -
-	export PATH="cmake-${CMAKE_VERSION}-Linux-x86_64:$$PATH"
+# mkdir cmake && travis_retry
+	mkdir cmake && wget -qO- ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
 
 setup:                      ## Setup install location
 	@mkdir -p ${DESTDIR}

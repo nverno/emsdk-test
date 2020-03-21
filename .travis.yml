@@ -22,9 +22,15 @@ addons:
 
 install:
     # needs cmake version 3.13.5+ for add_link_options
-  - make deps
+  - |
+    CMAKE_URL=https://github.com/Kitware/CMake/releases/download/v3.17.0/cmake-3.17.0-Linux-x86_64.tar.gz
+    mkdir cmake && travis_retry wget --no-check-certificate -qO- ${CMAKE_URL} | \
+    tar --strip-components=1 -xz -C cmake
+    export PATH=cmake/bin:${PATH}
   - cmake --version
-  - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
+
+  - |
+    if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
       export CC=clang-3.6 CXX=clang++-3.6;
     fi
 
