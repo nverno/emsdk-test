@@ -20,7 +20,7 @@ all: emsdk-activate glslang ## Install both emscripten SDK & glslang
 
 deps: ## Install dependencies -- cmake v3.13.5+ for add_link_options
 	wget -qO- ${CMAKE_URI} | tar xzf -
-	export PATH="cmake-${CMAKE_VERSION}-Linux-x86_64:$PATH"
+	export PATH="cmake-${CMAKE_VERSION}-Linux-x86_64:$$PATH"
 
 setup:                      ## Setup install location
 	@mkdir -p ${DESTDIR}
