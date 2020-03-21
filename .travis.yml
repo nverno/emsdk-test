@@ -1,6 +1,6 @@
 language: cpp
-# compiler:
-#   - clang
+compiler:
+  - clang
 #   - gcc
 
 os: linux
@@ -16,12 +16,16 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
       # - llvm-toolchain-trusty-6.0
+      - llvm-toolchain-precise-3.7
+      - kalakris-cmake
     packages:
       - clang-3.6
       - cmake-data
       - cmake
 
 install:
+  # needs cmake version 3.13.5+ for add_link_options
+  - cmake --version
   - if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
       export CC=clang-3.6 CXX=clang++-3.6;
     fi
