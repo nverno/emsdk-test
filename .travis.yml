@@ -28,11 +28,7 @@ install:
     tar --strip-components=1 -xz -C cmake
     export PATH=cmake/bin:${PATH}
   - cmake --version
-
-  - |
-    if [[ "$TRAVIS_OS_NAME" == "linux" && "$CC" == "clang" ]]; then
-      export CC=clang-3.6 CXX=clang++-3.6;
-    fi
+  - export CC=clang-3.6 CXX=clang++-3.6;
 
 script:
   - make test
